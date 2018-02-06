@@ -1,0 +1,12 @@
+change tb_parameters with master config
+
+ahb_master_coverage is deactivated (check top env)
+
+###############
+UVM -> easierUVM
+sequence item [done]
+master_driver [done] 
+slave_driver  [done]
+checker 
+scoreboards
+byte_monitor
