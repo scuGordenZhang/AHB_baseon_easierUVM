@@ -13,12 +13,13 @@
 // Description: Sequence for agent AHB_master
 //=============================================================================
 
-`ifndef AHB_MASTER_SEQ_LIB_SV
-`define AHB_MASTER_SEQ_LIB_SV
+`ifndef default_seq_SV
+`define default_seq_SV
 import tb_parameters::*;
-class AHB_master_default_seq extends uvm_sequence #(trans);
+class default_seq extends uvm_sequence #(trans);
 
-  `uvm_object_utils(AHB_master_default_seq)
+  `uvm_object_utils(default_seq)
+
 
   extern function new(string name = "");
   extern task body();
@@ -29,15 +30,17 @@ class AHB_master_default_seq extends uvm_sequence #(trans);
   extern function void set_starting_phase(uvm_phase phase);
 `endif
 
-endclass : AHB_master_default_seq
 
 
-function AHB_master_default_seq::new(string name = "");
+endclass : default_seq
+
+
+function default_seq::new(string name = "");
   super.new(name);
 endfunction : new
 
 
-task AHB_master_default_seq::body();
+task default_seq::body();
   `uvm_info(get_type_name(), "Default sequence starting", UVM_HIGH)
 
   req = trans::type_id::create("req");
@@ -48,19 +51,20 @@ task AHB_master_default_seq::body();
     $display("Generated transaction with properties:\n %s",req.convert2string);
     finish_item(req); 
   end
-
   `uvm_info(get_type_name(), "Default sequence completed", UVM_HIGH)
+
+
 
 endtask : body
 
 
 `ifndef UVM_POST_VERSION_1_1
-function uvm_phase AHB_master_default_seq::get_starting_phase();
+function uvm_phase default_seq::get_starting_phase();
   return starting_phase;
 endfunction: get_starting_phase
 
 
-function void AHB_master_default_seq::set_starting_phase(uvm_phase phase);
+function void default_seq::set_starting_phase(uvm_phase phase);
   starting_phase = phase;
 endfunction: set_starting_phase
 `endif

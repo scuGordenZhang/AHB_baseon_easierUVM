@@ -25,6 +25,9 @@ class AHB_master_driver extends uvm_driver #(trans);
   virtual AHB_master_if vif;
   AHB_master_config m_config;
 
+  // Master variables
+  
+
   extern function new(string name, uvm_component parent);
 
   // You can insert code here by setting driver_inc_inside_class in file AHB_master.tpl
@@ -74,31 +77,40 @@ class AHB_master_driver extends uvm_driver #(trans);
 	trans trans;
 	// Add execute_address_phase()
 	task execute_address_phase();
-		while(!($urandom_range(0,99)<GEN_RATE)) begin 
-			@(posedge vif.clk);
-			reset_address_phase();
-		end
-		seq_item_port.get_next_item(trans);
-		for (int i = 0; i < trans.length; i++) begin
-			// Address phase
-			@(posedge vif.clk);
-			vif.HTRANS <= (i==0) ? NONSEQ : SEQ;
-			vif.HADDR <= trans.start_address + i*(2**trans.size);
-			vif.HWRITE <= trans.write;
-			vif.HBURST <= len2burst(trans.length);
-			vif.HSIZE <= trans.size;
-			address = vif.HADDR;
-			size = vif.HSIZE;
+		forever begin 
+			seq_item_port.get_next_item(trans);
 
-			// Data phase
-			@(negedge vif.clk);
-			wait(vif.HREADY);
-			fork
-				if (trans.write) execute_data_phase();
-			join_none
-			
+			while(!($urandom_range(0,99)<trans.GEN_RATE) && !trans.reset) begin 
+				@(posedge vif.clk);
+				reset_address_phase();
+			end
+			for (int i = 0; i < trans.length; i++) begin
+				// Address phase
+				@(posedge vif.clk);
+				vif.HADDR <= trans.reset ? 0 : (trans.start_address + i*(2**trans.size));
+				vif.HWRITE <= trans.write;
+				vif.HBURST <= len2burst(trans.length);
+				vif.HSIZE <= trans.reset ? 0 : trans.size;
+				// master can instert idle cycle during a burst with busy
+				// only incr burst can end with busy transaction
+				while ($urandom_range(0,99)<trans.BUSY_RATE && !trans.reset && (i!=(trans.length-1))) begin 
+					vif.HTRANS <= BUSY;
+					@(posedge vif.clk);
+				end
+				vif.HTRANS <= trans.reset ? IDLE : ((i==0)  ? NONSEQ : SEQ);
+				address = vif.HADDR;
+				size = vif.HSIZE;
+
+				// Data phase
+				@(negedge vif.clk);
+				wait(vif.HREADY);
+				fork
+					if (trans.write && !trans.reset) execute_data_phase();
+				join_none
+				
+			end			
+			seq_item_port.item_done();
 		end
-		seq_item_port.item_done();
 
 	endtask : execute_address_phase
 
@@ -108,14 +120,8 @@ class AHB_master_driver extends uvm_driver #(trans);
 	endtask : execute_data_phase
 
 	task run_phase(uvm_phase phase);
-		phase.raise_objection(this);
 		wait(vif.rst_n);
-		repeat (TOTAL_TRANSFERS) begin
-			execute_address_phase();
-		end
-		@(posedge vif.clk);
-		reset_address_phase();
-		phase.drop_objection(this);
+		execute_address_phase();
 	endtask : run_phase
 
 

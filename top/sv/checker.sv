@@ -43,9 +43,12 @@ class Checker extends  uvm_component;
 				master_byte = master_scb.read();
 				slave_byte  = slave_scb.read();
 				if(!compare_bytes(master_byte,slave_byte)) 
-					$fatal("Bytes not equal\n", 
+					`uvm_fatal(get_type_name(), $sformatf("Bytes not equal\n", 
 							 "Master scb address=%0h data=%0h\n", master_byte.address, master_byte.data, 
-							 "Slave  scb address=%0h data=%0h\n", slave_byte.address,  slave_byte.data);
+							 "Slave  scb address=%0h data=%0h\n", slave_byte.address,  slave_byte.data))
+					// $fatal("Bytes not equal\n", 
+					// 		 "Master scb address=%0h data=%0h\n", master_byte.address, master_byte.data, 
+					// 		 "Slave  scb address=%0h data=%0h\n", slave_byte.address,  slave_byte.data);
 				// show_comparison(master_byte,slave_byte);
 			end
 		end

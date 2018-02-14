@@ -35,6 +35,11 @@ class trans extends uvm_sequence_item;
   rand bit [2:0] length;
   rand bit [ADDRESS_WIDTH-1:0] start_address;
 
+  // AHB Master variables
+  bit reset = 0;
+  int GEN_RATE = 100;
+  int BUSY_RATE = 0;
+
   // data must fit in the bus
   constraint size_c {size>=MIN_BURST_SIZE && size<=MAX_BURST_SIZE;}
   constraint size_fit_in_bus_c {(2**size)*8<=DATA_WIDTH;}
@@ -140,8 +145,9 @@ function string trans::convert2string();
 	 "write         = 'h%0h  'd%0d\n", 
 	 "size          = 'h%0h  'd%0d\n", 
 	 "length        = 'h%0h  'd%0d\n", 
-	 "start_address = 'h%0h  'd%0d\n"},
-	 get_full_name(), write, write, size, size, length, length, start_address, start_address);
+	 "start_address = 'h%0h  'd%0d\n",
+   "reset = %b"},
+	 get_full_name(), write, write, size, size, length, length, start_address, start_address,reset);
   return s;
 endfunction : convert2string
 

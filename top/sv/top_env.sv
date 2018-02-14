@@ -107,6 +107,7 @@ function void top_env::build_phase(uvm_phase phase);
   checker_h.master_scb = m_scoreboard;
   checker_h.slave_scb  = s_scoreboard;
 
+ 
   // You can insert code here by setting top_env_append_to_build_phase in file common.tpl
 
 endfunction : build_phase
@@ -149,7 +150,6 @@ task top_env::run_phase(uvm_phase phase);
   vseq.m_AHB_slave_agent  = m_AHB_slave_agent; 
   vseq.set_starting_phase(phase);
   vseq.start(null);
-  
   // You can insert code here by setting top_env_append_to_run_phase in file common.tpl
 
 endtask : run_phase

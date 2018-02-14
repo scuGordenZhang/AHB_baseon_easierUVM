@@ -29,6 +29,9 @@ package AHB_master_pkg;
   `include "AHB_master_sequencer.sv"
   `include "AHB_master_coverage.sv"
   `include "AHB_master_agent.sv"
-  `include "AHB_master_seq_lib.sv"
+
+  `include "busy_master_seq.sv"
+  `include "reset_seq.sv"
+  `include "default_seq.sv"
 
 endpackage : AHB_master_pkg

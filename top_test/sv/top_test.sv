@@ -23,6 +23,8 @@ class top_test extends uvm_test;
   `uvm_component_utils(top_test)
 
   top_env m_env;
+  string cmd_option_i;
+  int option;
 
   extern function new(string name, uvm_component parent);
 
@@ -31,6 +33,8 @@ class top_test extends uvm_test;
   extern function void build_phase(uvm_phase phase);
 
   // You can insert code here by setting test_inc_inside_class in file common.tpl
+
+
 
 endclass : top_test
 
@@ -47,9 +51,9 @@ function void top_test::build_phase(uvm_phase phase);
   // You can insert code here by setting test_prepend_to_build_phase in file common.tpl
 
   // You could modify any test-specific configuration object variables here
-
-
-
+  // void'(uvm_cmdline_proc.get_arg_value("+OPTION=",cmd_option_i));
+  // option = cmd_option_i.atoi();
+  uvm_config_db#(int)::set(this,"*","option",option);
   m_env = top_env::type_id::create("m_env", this);
 
   // You can insert code here by setting test_append_to_build_phase in file common.tpl

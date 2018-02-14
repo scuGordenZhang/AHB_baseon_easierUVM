@@ -19,9 +19,24 @@
 class top_default_seq extends uvm_sequence #(uvm_sequence_item);
 
   `uvm_object_utils(top_default_seq)
+/******************************
+Sequences menu (set option at cmd)
+1- Default sequence (ideal master & slave)
+2- High busy rate @master
+******************************/
+
 
   AHB_master_agent  m_AHB_master_agent;
   AHB_slave_agent   m_AHB_slave_agent; 
+  int option;
+  string cmd_option_i;
+
+  // Sequence handles
+  default_seq     seq;
+  reset_seq       r_seq;
+  busy_master_seq b_seq;
+
+
 
   // Number of times to repeat child sequences
   int m_seq_count = 1;
@@ -37,6 +52,20 @@ class top_default_seq extends uvm_sequence #(uvm_sequence_item);
   extern function void set_starting_phase(uvm_phase phase);
 `endif
 
+task reset();
+  r_seq = reset_seq::type_id::create("r_seq");
+  r_seq.set_item_context(this, m_AHB_master_agent.m_sequencer);
+  if ( !r_seq.randomize() )
+    `uvm_error(get_type_name(), "Failed to randomize sequence")
+  r_seq.set_starting_phase( get_starting_phase() );
+  r_seq.start(m_AHB_master_agent.m_sequencer, this);
+endtask : reset
+
+task read_option_from_cmd();
+  void'(uvm_cmdline_proc.get_arg_value("+OPTION=",cmd_option_i));
+  option = cmd_option_i.atoi();
+endtask : read_option_from_cmd
+  
 endclass : top_default_seq
 
 
@@ -46,36 +75,35 @@ endfunction : new
 
 
 task top_default_seq::body();
-  `uvm_info(get_type_name(), "Default sequence starting", UVM_HIGH)
-
+  read_option_from_cmd();
 
   repeat (m_seq_count)
   begin
     fork
       if (m_AHB_master_agent.m_config.is_active == UVM_ACTIVE)
       begin
-        AHB_master_default_seq seq;
-        seq = AHB_master_default_seq::type_id::create("seq");
-        seq.set_item_context(this, m_AHB_master_agent.m_sequencer);
-        if ( !seq.randomize() )
-          `uvm_error(get_type_name(), "Failed to randomize sequence")
-        seq.set_starting_phase( get_starting_phase() );
-        seq.start(m_AHB_master_agent.m_sequencer, this);
+        // Start with reset seq
+        reset();
+
+        // Default sequence
+        if(option==1) begin
+          seq = default_seq::type_id::create("seq");
+          seq.randomize();
+          seq.start(m_AHB_master_agent.m_sequencer, this);
+        end else if(option==2) begin
+          b_seq = busy_master_seq::type_id::create("b_seq");
+          b_seq.randomize();
+          b_seq.start(m_AHB_master_agent.m_sequencer, this);
+        end
+
+
+
+        // End with reset seq
+        reset();
       end
-      // if (m_AHB_slave_agent.m_config.is_active == UVM_ACTIVE)
-      // begin
-      //   AHB_slave_default_seq seq;
-      //   seq = AHB_slave_default_seq::type_id::create("seq");
-      //   seq.set_item_context(this, m_AHB_slave_agent.m_sequencer);
-      //   if ( !seq.randomize() )
-      //     `uvm_error(get_type_name(), "Failed to randomize sequence")
-      //   seq.set_starting_phase( get_starting_phase() );
-      //   seq.start(m_AHB_slave_agent.m_sequencer, this);
-      // end
     join
   end
-
-  `uvm_info(get_type_name(), "Default sequence completed", UVM_HIGH)
+  
 endtask : body
 
 
