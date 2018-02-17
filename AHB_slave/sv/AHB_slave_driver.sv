@@ -26,21 +26,28 @@ class AHB_slave_driver extends uvm_driver #(trans);
 
   uvm_tlm_analysis_fifo #(trans) master_trans_f;
 
-  extern function new(string name, uvm_component parent);
+  int SLAVE_STALL_RATE;
+  int ERROR_RATE;
 
-  int HREADY_RATE = 100;
-  int ERROR_RATE  = 0;
+  
 
   // You can insert code here by setting driver_inc_inside_class in file AHB_slave.tpl
   /*-------------------------------------------------------------------------------
 	-- Functions
 	-------------------------------------------------------------------------------*/
+	function new(string name, uvm_component parent);
+	  super.new(name, parent);
+	  SLAVE_STALL_RATE = 0;
+	  ERROR_RATE  = 0;
+	endfunction : new
+
+
 	function void build_phase(uvm_phase phase);
       master_trans_f = new ("master_trans_f", this);
    endfunction : build_phase
 
-   function update_slave_variables(input int HREADY_RATE, input int ERROR_RATE);
-   	this.HREADY_RATE = HREADY_RATE;
+   function update_slave_variables(input int SLAVE_STALL_RATE, input int ERROR_RATE);
+   	this.SLAVE_STALL_RATE = SLAVE_STALL_RATE;
    	this.ERROR_RATE = ERROR_RATE;   
    endfunction : update_slave_variables
 
@@ -49,44 +56,72 @@ class AHB_slave_driver extends uvm_driver #(trans);
 	-- Tasks
 	-------------------------------------------------------------------------------*/
 	task reset();
-		vif.HREADY <= 0;
-		vif.HRDATA <= 0;
+		vif.HREADY <= 1;
 		vif.HRESP  <= 0;
+		vif.HRDATA <= 0;
 	endtask : reset
+
+	task handle_slave_responses();
+		bit new_transaction;
+		reset();
+		forever begin 
+			new_transaction = ((vif.HTRANS==NONSEQ)||(vif.HTRANS==SEQ))&& vif.HREADY;
+			while ($urandom_range(0,99)<SLAVE_STALL_RATE) begin 
+				vif.HREADY <= 0;
+				vif.HRESP  <= 0;
+				@(posedge vif.clk);
+			end
+
+			if(new_transaction && ($urandom_range(0,99)<ERROR_RATE)) begin
+				vif.HREADY <= 0;
+				vif.HRESP  <= 1;
+				@(posedge vif.clk);
+				vif.HREADY <= 1;
+				vif.HRESP  <= 1;
+				@(posedge vif.clk);
+			end else begin 
+				vif.HREADY <= 1;
+				vif.HRESP  <= 0;
+				@(posedge vif.clk);
+			end
+
+
+
+			
+		end
+	endtask : handle_slave_responses
 
 	bit[ADDRESS_WIDTH-1:0] address;
 	bit[2:0] size;
-	task execute_address_phase();
-		reset();
-		vif.HREADY <= 1;
-		vif.HRESP  <= 0;
+	task execute_data_phase();
 		forever begin 
 			@(negedge vif.clk);
-			if((!vif.HWRITE)&&((vif.HTRANS==NONSEQ)||(vif.HTRANS==SEQ))) begin
+			if((!vif.HWRITE)&& ((vif.HTRANS==NONSEQ)||(vif.HTRANS==SEQ))&&vif.HREADY) begin
 				address = vif.HADDR;
 				size = vif.HSIZE;	
 				fork
-					execute_data_phase(address,size);
+					send_write_data(address,size);
 				join_none
 			end			
 		end
-	endtask : execute_address_phase 
+	endtask : execute_data_phase 
 
-	task execute_data_phase(input bit[ADDRESS_WIDTH-1:0] address, input bit[2:0] size);
+	task send_write_data(input bit[ADDRESS_WIDTH-1:0] address, input bit[2:0] size);
 			@(posedge vif.clk);
 			vif.HRDATA <= get_data(address,size);
-	endtask : execute_data_phase
+	endtask : send_write_data
 
 	task run_phase(uvm_phase phase);
-		execute_address_phase();		
+		fork
+			handle_slave_responses();
+			execute_data_phase();
+		join_none
+
 	endtask : run_phase
 
 endclass : AHB_slave_driver 
 
 
-function AHB_slave_driver::new(string name, uvm_component parent);
-  super.new(name, parent);
-endfunction : new
 
 
 // You can insert code here by setting driver_inc_after_class in file AHB_slave.tpl

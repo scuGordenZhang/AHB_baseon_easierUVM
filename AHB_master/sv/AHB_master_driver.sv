@@ -26,7 +26,13 @@ class AHB_master_driver extends uvm_driver #(trans);
   AHB_master_config m_config;
 
   // Master variables
-  
+  int GEN_RATE = 100;
+  int BUSY_RATE = 0;
+
+  function update_master_variables(input int GEN_RATE, input int BUSY_RATE);
+  	this.GEN_RATE = GEN_RATE;
+  	this.BUSY_RATE = BUSY_RATE;
+  endfunction : update_master_variables
 
   extern function new(string name, uvm_component parent);
 
@@ -80,20 +86,19 @@ class AHB_master_driver extends uvm_driver #(trans);
 		forever begin 
 			seq_item_port.get_next_item(trans);
 
-			while(!($urandom_range(0,99)<trans.GEN_RATE) && !trans.reset) begin 
+			while(!($urandom_range(0,99)<GEN_RATE) && !trans.reset) begin 
 				@(posedge vif.clk);
 				reset_address_phase();
 			end
 			for (int i = 0; i < trans.length; i++) begin
 				// Address phase
-				@(posedge vif.clk);
 				vif.HADDR <= trans.reset ? 0 : (trans.start_address + i*(2**trans.size));
 				vif.HWRITE <= trans.write;
 				vif.HBURST <= len2burst(trans.length);
 				vif.HSIZE <= trans.reset ? 0 : trans.size;
 				// master can instert idle cycle during a burst with busy
 				// only incr burst can end with busy transaction
-				while ($urandom_range(0,99)<trans.BUSY_RATE && !trans.reset && (i!=(trans.length-1))) begin 
+				while ($urandom_range(0,99)<BUSY_RATE && !trans.reset && (i!=(trans.length-1))) begin 
 					vif.HTRANS <= BUSY;
 					@(posedge vif.clk);
 				end
@@ -107,6 +112,7 @@ class AHB_master_driver extends uvm_driver #(trans);
 				fork
 					if (trans.write && !trans.reset) execute_data_phase();
 				join_none
+				@(posedge vif.clk);
 				
 			end			
 			seq_item_port.item_done();

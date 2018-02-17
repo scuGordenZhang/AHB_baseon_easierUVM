@@ -37,8 +37,7 @@ class trans extends uvm_sequence_item;
 
   // AHB Master variables
   bit reset = 0;
-  int GEN_RATE = 100;
-  int BUSY_RATE = 0;
+  
 
   // data must fit in the bus
   constraint size_c {size>=MIN_BURST_SIZE && size<=MAX_BURST_SIZE;}

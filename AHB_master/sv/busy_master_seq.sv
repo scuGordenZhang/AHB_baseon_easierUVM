@@ -29,11 +29,29 @@ class busy_master_seq extends uvm_sequence #(trans);
   extern function void set_starting_phase(uvm_phase phase);
 `endif
 
+  // Every sequence must set master,slave variables
+  // Master variables
+  int GEN_RATE;
+  int BUSY_RATE;
+  // Slave variables
+  int SLAVE_STALL_RATE;
+  int ERROR_RATE;
+
+
+
+
 endclass : busy_master_seq
 
 
 function busy_master_seq::new(string name = "");
   super.new(name);
+  // Master variables
+  GEN_RATE = $urandom_range(70,100);
+  BUSY_RATE = $urandom_range(50,90);
+  
+  // Slave variables
+  SLAVE_STALL_RATE = 0;
+  BUSY_RATE = 50;
 endfunction : new
 
 
@@ -44,7 +62,6 @@ task busy_master_seq::body();
     start_item(req); 
     if ( !req.randomize() )
     `uvm_error(get_type_name(), "Failed to randomize transaction")
-    req.BUSY_RATE = $urandom_range(50,90);
     $display("Generated transaction with properties:\n %s",req.convert2string);
     finish_item(req); 
   end

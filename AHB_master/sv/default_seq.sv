@@ -30,13 +30,26 @@ class default_seq extends uvm_sequence #(trans);
   extern function void set_starting_phase(uvm_phase phase);
 `endif
 
-
+  // Every sequence must set master,slave variables
+  // Master variables
+  int GEN_RATE;
+  int BUSY_RATE;
+  // Slave variables
+  int SLAVE_STALL_RATE;
+  int ERROR_RATE;
 
 endclass : default_seq
 
 
 function default_seq::new(string name = "");
   super.new(name);
+  // Master variables
+  GEN_RATE = 100;
+  BUSY_RATE = 50;
+  
+  // Slave variables
+  SLAVE_STALL_RATE = 50;
+  ERROR_RATE = 50;
 endfunction : new
 
 

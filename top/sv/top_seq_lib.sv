@@ -24,7 +24,11 @@ Sequences menu (set option at cmd)
 1- Default sequence (ideal master & slave)
 2- High busy rate @master
 ******************************/
-
+/******************************
+Rules
+*****
+Every sequence (at new function) must update master and slave variables
+******************************/
 
   AHB_master_agent  m_AHB_master_agent;
   AHB_slave_agent   m_AHB_slave_agent; 
@@ -89,10 +93,14 @@ task top_default_seq::body();
         if(option==1) begin
           seq = default_seq::type_id::create("seq");
           seq.randomize();
+          m_AHB_master_agent.m_driver.update_master_variables(seq.GEN_RATE, seq.BUSY_RATE);
+          m_AHB_slave_agent.m_driver.update_slave_variables(seq.SLAVE_STALL_RATE, seq.ERROR_RATE);
           seq.start(m_AHB_master_agent.m_sequencer, this);
         end else if(option==2) begin
           b_seq = busy_master_seq::type_id::create("b_seq");
           b_seq.randomize();
+          m_AHB_master_agent.m_driver.update_master_variables(b_seq.GEN_RATE, b_seq.BUSY_RATE);
+          m_AHB_slave_agent.m_driver.update_slave_variables(b_seq.SLAVE_STALL_RATE, b_seq.ERROR_RATE);
           b_seq.start(m_AHB_master_agent.m_sequencer, this);
         end
 
