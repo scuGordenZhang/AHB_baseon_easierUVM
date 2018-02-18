@@ -45,11 +45,11 @@ function default_seq::new(string name = "");
   super.new(name);
   // Master variables
   GEN_RATE = 100;
-  BUSY_RATE = 50;
+  BUSY_RATE = 0;
   
   // Slave variables
-  SLAVE_STALL_RATE = 50;
-  ERROR_RATE = 50;
+  SLAVE_STALL_RATE = 0;
+  ERROR_RATE = 0;
 endfunction : new
 
 

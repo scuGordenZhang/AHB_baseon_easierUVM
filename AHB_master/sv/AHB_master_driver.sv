@@ -96,7 +96,7 @@ class AHB_master_driver extends uvm_driver #(trans);
 				vif.HWRITE <= trans.write;
 				vif.HBURST <= len2burst(trans.length);
 				vif.HSIZE <= trans.reset ? 0 : trans.size;
-				// master can instert idle cycle during a burst with busy
+				// master can insert idle cycle during a burst with busy
 				// only incr burst can end with busy transaction
 				while ($urandom_range(0,99)<BUSY_RATE && !trans.reset && (i!=(trans.length-1))) begin 
 					vif.HTRANS <= BUSY;
@@ -108,7 +108,9 @@ class AHB_master_driver extends uvm_driver #(trans);
 
 				// Data phase
 				@(negedge vif.clk);
-				wait(vif.HREADY);
+				while (!vif.HREADY) begin 
+					@(negedge vif.clk);
+				end
 				fork
 					if (trans.write && !trans.reset) execute_data_phase();
 				join_none
