@@ -23,6 +23,8 @@ class top_default_seq extends uvm_sequence #(uvm_sequence_item);
 Sequences menu (set option at cmd)
 1- Default sequence (ideal master & slave)
 2- High busy rate @master
+3- Bad slave (high error, stall rates)
+4- Run all
 ******************************/
 /******************************
 Rules
@@ -39,6 +41,7 @@ Every sequence (at new function) must update master and slave variables
   default_seq     seq;
   reset_seq       r_seq;
   busy_master_seq b_seq;
+  bad_slave_seq   bad_s_seq;
 
 
 
@@ -89,19 +92,47 @@ task top_default_seq::body();
         // Start with reset seq
         reset();
 
-        // Default sequence
-        if(option==1) begin
+        
+        if(option==1) begin // Default sequence
           seq = default_seq::type_id::create("seq");
           seq.randomize();
           m_AHB_master_agent.m_driver.update_master_variables(seq.GEN_RATE, seq.BUSY_RATE);
           m_AHB_slave_agent.m_driver.update_slave_variables(seq.SLAVE_STALL_RATE, seq.ERROR_RATE);
           seq.start(m_AHB_master_agent.m_sequencer, this);
-        end else if(option==2) begin
+        end else if(option==2) begin // High busy rate @master
           b_seq = busy_master_seq::type_id::create("b_seq");
           b_seq.randomize();
           m_AHB_master_agent.m_driver.update_master_variables(b_seq.GEN_RATE, b_seq.BUSY_RATE);
           m_AHB_slave_agent.m_driver.update_slave_variables(b_seq.SLAVE_STALL_RATE, b_seq.ERROR_RATE);
           b_seq.start(m_AHB_master_agent.m_sequencer, this);
+        end else if(option==3) begin // Bad slave (high error, stall rates)
+          bad_s_seq = bad_slave_seq::type_id::create("bad_s_seq");
+          bad_s_seq.randomize();
+          m_AHB_master_agent.m_driver.update_master_variables(bad_s_seq.GEN_RATE, bad_s_seq.BUSY_RATE);
+          m_AHB_slave_agent.m_driver.update_slave_variables(bad_s_seq.SLAVE_STALL_RATE, bad_s_seq.ERROR_RATE);
+          bad_s_seq.start(m_AHB_master_agent.m_sequencer, this);
+        end else if (option==4) begin  // Run all
+          // Default sequence
+          seq = default_seq::type_id::create("seq");
+          seq.randomize();
+          m_AHB_master_agent.m_driver.update_master_variables(seq.GEN_RATE, seq.BUSY_RATE);
+          m_AHB_slave_agent.m_driver.update_slave_variables(seq.SLAVE_STALL_RATE, seq.ERROR_RATE);
+          seq.start(m_AHB_master_agent.m_sequencer, this);
+          reset();
+          // High busy rate @master
+          b_seq = busy_master_seq::type_id::create("b_seq");
+          b_seq.randomize();
+          m_AHB_master_agent.m_driver.update_master_variables(b_seq.GEN_RATE, b_seq.BUSY_RATE);
+          m_AHB_slave_agent.m_driver.update_slave_variables(b_seq.SLAVE_STALL_RATE, b_seq.ERROR_RATE);
+          b_seq.start(m_AHB_master_agent.m_sequencer, this);
+          reset();
+          // Bad slave (high error, stall rates)
+          bad_s_seq = bad_slave_seq::type_id::create("bad_s_seq");
+          bad_s_seq.randomize();
+          m_AHB_master_agent.m_driver.update_master_variables(bad_s_seq.GEN_RATE, bad_s_seq.BUSY_RATE);
+          m_AHB_slave_agent.m_driver.update_slave_variables(bad_s_seq.SLAVE_STALL_RATE, bad_s_seq.ERROR_RATE);
+          bad_s_seq.start(m_AHB_master_agent.m_sequencer, this);
+          reset();
         end
 
 

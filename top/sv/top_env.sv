@@ -29,7 +29,7 @@ class top_env extends uvm_env;
   AHB_master_config    m_AHB_master_config;  
   AHB_master_agent     m_AHB_master_agent;  
   AHB_master_scoreboard m_scoreboard; 
-  // AHB_master_coverage  m_AHB_master_coverage;
+  AHB_master_coverage  m_AHB_master_coverage;
 
   AHB_slave_config     m_AHB_slave_config;   
   AHB_slave_agent      m_AHB_slave_agent;    
@@ -79,7 +79,7 @@ function void top_env::build_phase(uvm_phase phase);
   if (m_AHB_master_config.is_active == UVM_ACTIVE )
     uvm_config_db #(AHB_master_config)::set(this, "m_AHB_master_agent.m_sequencer", "config", m_AHB_master_config);
     uvm_config_db #(AHB_master_config)::set(this, "m_AHB_master_agent.m_driver", "config", m_AHB_master_config);
-  // uvm_config_db #(AHB_master_config)::set(this, "m_AHB_master_coverage", "config", m_AHB_master_config);
+  uvm_config_db #(AHB_master_config)::set(this, "m_AHB_master_coverage", "config", m_AHB_master_config);
 
   m_AHB_slave_config                 = new("m_AHB_slave_config");         
   m_AHB_slave_config.vif             = m_config.AHB_slave_vif;            
@@ -96,7 +96,7 @@ function void top_env::build_phase(uvm_phase phase);
 
 
   m_AHB_master_agent    = AHB_master_agent   ::type_id::create("m_AHB_master_agent", this);
-  // m_AHB_master_coverage = AHB_master_coverage::type_id::create("m_AHB_master_coverage", this);
+  m_AHB_master_coverage = AHB_master_coverage::type_id::create("m_AHB_master_coverage", this);
   m_scoreboard = AHB_master_scoreboard::type_id::create("m_scoreboard",this);
 
   m_AHB_slave_agent     = AHB_slave_agent    ::type_id::create("m_AHB_slave_agent", this);
@@ -117,6 +117,7 @@ function void top_env::connect_phase(uvm_phase phase);
   `uvm_info(get_type_name(), "In connect_phase", UVM_HIGH)
 
   // m_AHB_master_agent.analysis_port.connect(m_AHB_master_coverage.analysis_export);
+  m_AHB_master_agent.m_driver.trans_cov_port.connect(m_AHB_master_coverage.analysis_export);
   m_AHB_master_agent.analysis_port.connect(m_scoreboard.analysis_export);
 
   // m_AHB_slave_agent.analysis_port.connect(m_AHB_slave_coverage.analysis_export);

@@ -24,15 +24,12 @@ class AHB_master_driver extends uvm_driver #(trans);
 
   virtual AHB_master_if vif;
   AHB_master_config m_config;
+  uvm_analysis_port #(trans) trans_cov_port;
 
   // Master variables
   int GEN_RATE = 100;
   int BUSY_RATE = 0;
 
-  function update_master_variables(input int GEN_RATE, input int BUSY_RATE);
-  	this.GEN_RATE = GEN_RATE;
-  	this.BUSY_RATE = BUSY_RATE;
-  endfunction : update_master_variables
 
   extern function new(string name, uvm_component parent);
 
@@ -41,6 +38,12 @@ class AHB_master_driver extends uvm_driver #(trans);
   /*-------------------------------------------------------------------------------
 	-- Functions
 	-------------------------------------------------------------------------------*/
+	function void update_master_variables(input int GEN_RATE, input int BUSY_RATE);
+		this.GEN_RATE = GEN_RATE;
+		this.BUSY_RATE = BUSY_RATE;
+	endfunction : update_master_variables
+
+
 	function void build_phase(uvm_phase phase);
 		if (!uvm_config_db #(AHB_master_config)::get(this, "", "config", m_config))
     		`uvm_error(get_type_name(), "AHB_master config not found")
@@ -78,13 +81,13 @@ class AHB_master_driver extends uvm_driver #(trans);
 	endtask : reset
 
 
-	bit[ADDRESS_WIDTH-1:0] address;
-	bit[2:0] size;
+	
 	trans trans;
 	// Add execute_address_phase()
 	task execute_address_phase();
 		forever begin 
 			seq_item_port.get_next_item(trans);
+			trans_cov_port.write(trans);
 
 			while(!($urandom_range(0,99)<GEN_RATE) && !trans.reset) begin 
 				@(posedge vif.clk);
@@ -103,8 +106,7 @@ class AHB_master_driver extends uvm_driver #(trans);
 					@(posedge vif.clk);
 				end
 				vif.HTRANS <= trans.reset ? IDLE : ((i==0)  ? NONSEQ : SEQ);
-				address = vif.HADDR;
-				size = vif.HSIZE;
+
 
 				// Data phase
 				@(negedge vif.clk);
@@ -112,7 +114,7 @@ class AHB_master_driver extends uvm_driver #(trans);
 					@(negedge vif.clk);
 				end
 				fork
-					if (trans.write && !trans.reset) execute_data_phase();
+					if (trans.write && !trans.reset) execute_data_phase(vif.HADDR,vif.HSIZE);
 				join_none
 				@(posedge vif.clk);
 				
@@ -122,13 +124,14 @@ class AHB_master_driver extends uvm_driver #(trans);
 
 	endtask : execute_address_phase
 
-	task execute_data_phase();
+	task automatic execute_data_phase(input bit[ADDRESS_WIDTH-1:0] address, input bit[2:0] size);
 		@(posedge vif.clk); 
 		vif.HWDATA <= get_data(address,size);
 	endtask : execute_data_phase
 
 	task run_phase(uvm_phase phase);
-		wait(vif.rst_n);
+		@(posedge vif.rst_n);
+		@(posedge vif.clk);
 		execute_address_phase();
 	endtask : run_phase
 
@@ -138,6 +141,7 @@ endclass : AHB_master_driver
 
 function AHB_master_driver::new(string name, uvm_component parent);
   super.new(name, parent);
+  trans_cov_port = new("trans_cov_port",this);
 endfunction : new
 
 

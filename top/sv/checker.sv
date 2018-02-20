@@ -14,6 +14,7 @@ class Checker extends  uvm_component;
 
 
 	function bit compare_bytes(input ver_byte byte1,input ver_byte byte2);
+		if (byte1.data=='hff || byte2.data=='hff) $fatal("Driver is supposed to write ff bytes to non-active bytes");
 		return (byte1.data==byte2.data && byte1.address==byte2.address);
 	endfunction : compare_bytes
 

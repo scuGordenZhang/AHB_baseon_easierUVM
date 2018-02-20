@@ -13,12 +13,12 @@
 // Description: Sequence for agent AHB_master
 //=============================================================================
 
-`ifndef default_seq_SV
-`define default_seq_SV
+`ifndef bad_slave_seq_SV
+`define bad_slave_seq_SV
 import tb_parameters::*;
-class default_seq extends uvm_sequence #(trans);
+class bad_slave_seq extends uvm_sequence #(trans);
 
-  `uvm_object_utils(default_seq)
+  `uvm_object_utils(bad_slave_seq)
 
 
   extern function new(string name = "");
@@ -38,22 +38,22 @@ class default_seq extends uvm_sequence #(trans);
   int SLAVE_STALL_RATE;
   int ERROR_RATE;
 
-endclass : default_seq
+endclass : bad_slave_seq
 
 
-function default_seq::new(string name = "");
+function bad_slave_seq::new(string name = "");
   super.new(name);
   // Master variables
   GEN_RATE = 100;
-  BUSY_RATE = 0;
+  BUSY_RATE = $urandom_range(20,70);
   
   // Slave variables
-  SLAVE_STALL_RATE = 0;
-  ERROR_RATE = 0;
+  SLAVE_STALL_RATE = $urandom_range(50,90);
+  ERROR_RATE = $urandom_range(50,90);
 endfunction : new
 
 
-task default_seq::body();
+task bad_slave_seq::body();
   `uvm_info(get_type_name(), "Default sequence starting", UVM_HIGH)
 
   req = trans::type_id::create("req");
@@ -72,12 +72,12 @@ endtask : body
 
 
 `ifndef UVM_POST_VERSION_1_1
-function uvm_phase default_seq::get_starting_phase();
+function uvm_phase bad_slave_seq::get_starting_phase();
   return starting_phase;
 endfunction: get_starting_phase
 
 
-function void default_seq::set_starting_phase(uvm_phase phase);
+function void bad_slave_seq::set_starting_phase(uvm_phase phase);
   starting_phase = phase;
 endfunction: set_starting_phase
 `endif

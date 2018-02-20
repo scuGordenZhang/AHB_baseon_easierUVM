@@ -32,7 +32,7 @@ class trans extends uvm_sequence_item;
   // Transaction variables
   rand bit write;
   rand bit [2:0] size;
-  rand bit [2:0] length;
+  rand bit [5:0] length;
   rand bit [ADDRESS_WIDTH-1:0] start_address;
 
   // AHB Master variables
